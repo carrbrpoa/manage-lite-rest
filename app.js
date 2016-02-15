@@ -3,7 +3,7 @@ var Sequelize = require('sequelize'),
     http = require('http'),
 	conflictResolutionMiddleware = require('./custom_middlewares/conflict-resolution-middleware');
 
-// Define your models
+// Define your models --- SEQUELIZE ---
 var database = new Sequelize('postgres://postgres:adm123@localhost:5432/manage-lite-rest');
 var Role = database.define('Role', {
   name: {
@@ -16,6 +16,34 @@ var Role = database.define('Role', {
 	defaultValue: true
   }
 });
+
+var Settings = database.define('Settings', {
+    theme: {
+      type: Sequelize.STRING,
+      allowNull: false
+    }
+  });
+
+var Collaborator = database.define('Collaborators', {
+    email: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+          isEmail: true
+      }
+    },
+    name: {
+        type: Sequelize.STRING
+    },
+    username: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true
+    }
+});
+
+Role.hasOne(Collaborator, { as: 'DefaultRole' });
 
 //CORS middleware
 var allowCrossDomain = function(req, res, next) {
@@ -52,13 +80,25 @@ epilogue.initialize({
   sequelize: database
 });
 
-// Create REST resource
+// Create REST resource --- EPILOGUE ---
 var roleResource = epilogue.resource({
   model: Role,
   endpoints: ['/roles', '/roles/:id']
 });
 
+var settingsResource = epilogue.resource({
+    model: Settings,
+    endpoints: ['/settings', '/settings/:id']
+  });
+
+var collaboratorResource = epilogue.resource({
+    model: Collaborator,
+    endpoints: ['/collaborators', '/collaborators/:id']
+  });
+
 roleResource.use(conflictResolutionMiddleware);
+settingsResource.use(conflictResolutionMiddleware);
+collaboratorResource.use(conflictResolutionMiddleware);
 
 // Create database and listen
 database
