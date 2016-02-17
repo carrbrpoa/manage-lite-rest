@@ -2,7 +2,7 @@ var Sequelize = require('sequelize');
 
 // Define your models --- SEQUELIZE ---
 var database = new Sequelize('postgres://postgres:adm123@localhost:5432/manage-lite-rest');
-var Role = database.define('Role', {
+var Role = database.define('roles', {
     name : {
         type : Sequelize.STRING,
         allowNull : false
@@ -14,14 +14,14 @@ var Role = database.define('Role', {
     }
 });
 
-var Settings = database.define('Settings', {
+var Settings = database.define('settings', {
     theme : {
         type : Sequelize.STRING,
         allowNull : false
     }
 });
 
-var Collaborator = database.define('Collaborators', {
+var Collaborator = database.define('collaborators', {
     email : {
         type : Sequelize.STRING,
         allowNull : false,
@@ -45,7 +45,7 @@ var Collaborator = database.define('Collaborators', {
     }
 });
 
-var Project = database.define('Projects', {
+var Project = database.define('projects', {
     name : {
         type : Sequelize.STRING,
         allowNull : false,
@@ -58,7 +58,7 @@ var Project = database.define('Projects', {
     }
 });
 
-var Sprint = database.define('Sprints', {
+var Sprint = database.define('sprints', {
     name : {
         type : Sequelize.STRING,
         allowNull : false,
@@ -72,12 +72,31 @@ var Sprint = database.define('Sprints', {
     }
 });
 
+var Story = database.define('stories', {
+    title : {
+        type : Sequelize.STRING,
+        allowNull : false,
+        unique : true
+    },
+    description : {
+        type : Sequelize.TEXT
+    }
+});
+
+//var Backlog = database.define('backlogs');
+
 Role.hasOne(Collaborator, {
-    as : 'DefaultRole'
+    as : 'role'
 });
 Project.hasMany(Sprint, {
-    as : 'Sprints'
+    as : 'sprints'
 });
+Sprint.hasMany(Story, {
+    as : 'stories'
+});
+/*Backlog.hasOne(Story, {
+    as : 'backlog'
+});*/
 
 module.exports = {
     database : database,
@@ -85,5 +104,7 @@ module.exports = {
     Settings : Settings,
     Collaborator : Collaborator,
     Project : Project,
-    Sprint : Sprint
+    Sprint : Sprint,
+    Story: Story,
+    //Backlog: Backlog
 };

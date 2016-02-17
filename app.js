@@ -1,6 +1,7 @@
 var //Sequelize = require('sequelize'),
     epilogue = require('epilogue'),
     http = require('http'),
+    //restful = require('sequelize-restful'),
     models = require('./models/models'),
 	conflictResolutionMiddleware = require('./custom_middlewares/conflict-resolution-middleware');
 
@@ -27,9 +28,9 @@ if (process.env.USE_RESTIFY) {
 
   var app = express();
   var routes = require('./routes/index');
-  app.use(routes);
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false })); // to support URL-encoded bodies
+  app.use(routes);
   server = http.createServer(app);
 }
 
@@ -59,7 +60,6 @@ var collaboratorResource = epilogue.resource({
 
 var projectResource = epilogue.resource({
     model: models.Project,
-    associations: true,
     endpoints: ['/projects', '/projects/:id']
   });
 
@@ -74,6 +74,10 @@ settingsResource.use(conflictResolutionMiddleware);
 collaboratorResource.use(conflictResolutionMiddleware);
 projectResource.use(conflictResolutionMiddleware);
 //sprintResource.use(conflictResolutionMiddleware);
+
+//app.configure(function() {
+//app.use(restful(models.database, { endpoint: '/', allowed: new Array('projects', 'sprints', 'backlogs', 'stories') }));
+//});
 
 // Create database and listen
 models.database
