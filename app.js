@@ -1,49 +1,8 @@
-var Sequelize = require('sequelize'),
+var //Sequelize = require('sequelize'),
     epilogue = require('epilogue'),
     http = require('http'),
+    models = require('./models/models'),
 	conflictResolutionMiddleware = require('./custom_middlewares/conflict-resolution-middleware');
-
-// Define your models --- SEQUELIZE ---
-var database = new Sequelize('postgres://postgres:adm123@localhost:5432/manage-lite-rest');
-var Role = database.define('Role', {
-  name: {
-    type: Sequelize.STRING,
-    allowNull: false
-  },
-  enabled: {
-    type: Sequelize.BOOLEAN,
-    allowNull: false,
-	defaultValue: true
-  }
-});
-
-var Settings = database.define('Settings', {
-    theme: {
-      type: Sequelize.STRING,
-      allowNull: false
-    }
-  });
-
-var Collaborator = database.define('Collaborators', {
-    email: {
-      type: Sequelize.STRING,
-      allowNull: false,
-      unique: true,
-      validate: {
-          isEmail: true
-      }
-    },
-    name: {
-        type: Sequelize.STRING
-    },
-    username: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
-    }
-});
-
-Role.hasOne(Collaborator, { as: 'DefaultRole' });
 
 //CORS middleware
 var allowCrossDomain = function(req, res, next) {
@@ -67,6 +26,8 @@ if (process.env.USE_RESTIFY) {
       bodyParser = require('body-parser');
 
   var app = express();
+  var routes = require('./routes/index');
+  app.use(routes);
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false })); // to support URL-encoded bodies
   server = http.createServer(app);
@@ -77,31 +38,45 @@ app.use(allowCrossDomain);
 // Initialize epilogue
 epilogue.initialize({
   app: app,
-  sequelize: database
+  sequelize: models.database
 });
 
 // Create REST resource --- EPILOGUE ---
 var roleResource = epilogue.resource({
-  model: Role,
+  model: models.Role,
   endpoints: ['/roles', '/roles/:id']
 });
 
 var settingsResource = epilogue.resource({
-    model: Settings,
+    model: models.Settings,
     endpoints: ['/settings', '/settings/:id']
   });
 
 var collaboratorResource = epilogue.resource({
-    model: Collaborator,
+    model: models.Collaborator,
     endpoints: ['/collaborators', '/collaborators/:id']
   });
+
+var projectResource = epilogue.resource({
+    model: models.Project,
+    associations: true,
+    endpoints: ['/projects', '/projects/:id']
+  });
+
+/*var sprintResource = epilogue.resource({
+    model: Sprint,
+    associations: true,
+    endpoints: ['/projects/:id/sprints', '/projects/:id/sprints/:id']
+  });*/
 
 roleResource.use(conflictResolutionMiddleware);
 settingsResource.use(conflictResolutionMiddleware);
 collaboratorResource.use(conflictResolutionMiddleware);
+projectResource.use(conflictResolutionMiddleware);
+//sprintResource.use(conflictResolutionMiddleware);
 
 // Create database and listen
-database
+models.database
   .sync({ force: true })
   .then(function() {
     server.listen(3131, function() {

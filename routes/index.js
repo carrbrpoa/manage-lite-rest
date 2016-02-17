@@ -1,9 +1,11 @@
+var models = require('../models/models');
 var express = require('express');
 var router = express.Router();
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+// epilogue routes
+router.use('/projects', function(req, res, next) {
+    console.log('Passing to epilogue');
+    return next();
 });
 
 module.exports = router;

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "supervisor ./bin/www"
+    "start": "node --debug ./bin/www"
   },
   "dependencies": {
     "body-parser": "~1.13.2",
@@ -11,8 +11,10 @@
     "debug": "~2.2.0",
     "epilogue": "^0.6.5",
     "express": "~4.13.1",
+    "fs": "0.0.2",
     "jade": "~1.11.0",
     "morgan": "~1.6.1",
+    "path": "^0.12.7",
     "pg": "^4.4.4",
     "pg-hstore": "^2.3.2",
     "sequelize": "^3.19.2",
