@@ -62,12 +62,12 @@ var Sprint = database.define('sprints', {
     name : {
         type : Sequelize.STRING,
         allowNull : false,
-        unique : true
+        //unique : true
     },
-    startsAt : {
+    start : {
         type : Sequelize.DATE
     },
-    endsAt : {
+    end : {
         type : Sequelize.DATE
     }
 });
@@ -91,6 +91,7 @@ Role.hasOne(Collaborator, {
 Project.hasMany(Sprint, {
     as : 'sprints'
 });
+Sprint.belongsTo(Project);
 Sprint.hasMany(Story, {
     as : 'stories'
 });

@@ -3,16 +3,8 @@ var //Sequelize = require('sequelize'),
     http = require('http'),
     //restful = require('sequelize-restful'),
     models = require('./models/models'),
-	conflictResolutionMiddleware = require('./custom_middlewares/conflict-resolution-middleware');
-
-//CORS middleware
-var allowCrossDomain = function(req, res, next) {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    res.header('Access-Control-Allow-Headers', 'Content-Type');
-
-    next();
-}
+	conflictResolutionMiddleware = require('./custom_middlewares/conflict-resolution-middleware'),
+    cors = require('./custom_middlewares/cors');
 
 // Initialize server
 var server, app;
@@ -33,8 +25,6 @@ if (process.env.USE_RESTIFY) {
   app.use(routes);
   server = http.createServer(app);
 }
-
-app.use(allowCrossDomain);
 
 // Initialize epilogue
 epilogue.initialize({
@@ -78,6 +68,15 @@ projectResource.use(conflictResolutionMiddleware);
 //app.configure(function() {
 //app.use(restful(models.database, { endpoint: '/', allowed: new Array('projects', 'sprints', 'backlogs', 'stories') }));
 //});
+
+app.use(cors);
+
+//production error handler
+//no stacktraces leaked to user
+app.use(function(err, req, res, next) {
+    res.status(err.status || 500);
+    res.send(err);
+});
 
 // Create database and listen
 models.database

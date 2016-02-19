@@ -1,6 +1,9 @@
 var models = require('../models/models');
 var express = require('express');
+var cors = require('../custom_middlewares/cors');
 var router = express.Router();
+
+router.use(cors);
 
 var handleWithEpilogue = function(req) {
     if (req.method === 'POST') {
@@ -21,8 +24,7 @@ router.use(function timeLog(req, res, next) {
     next();
 });
 
-// epilogue routes
-router.use('/projects', function(req, res, next) {
+/*router.use('/projects', function(req, res, next) {
     if (handleWithEpilogue(req)) {
         console.log('Passing to epilogue');
         next();
@@ -30,6 +32,33 @@ router.use('/projects', function(req, res, next) {
         console.log('Not epilogue');
         // TODO
         next();
+    }
+});*/
+
+router.post('/projects', function(req, res, next) {
+    if (handleWithEpilogue(req)) {
+        console.log('Passing to epilogue');
+        next();
+    } else {
+        console.log('Not epilogue');
+        
+        var project = req.body;
+        
+        models.database.transaction().then(function (t) {
+            models.Project.create(project, { transaction: t, include: [ { model: models.Sprint, as: 'sprints' } ] }).then(function(project){
+                t.commit();
+                return res.json(project);
+            }, function(err) {
+                t.rollback();
+                if (err.message === 'Validation error') {
+                    res.status(403);
+                    res.send(err);
+                }
+                else {
+                    next(err);
+                }
+            });
+        });
     }
 });
 
