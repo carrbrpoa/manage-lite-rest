@@ -83,8 +83,6 @@ var Story = database.define('stories', {
     }
 });
 
-//var Backlog = database.define('backlogs');
-
 Role.hasOne(Collaborator, {
     as : 'role'
 });
@@ -95,9 +93,11 @@ Sprint.belongsTo(Project);
 Sprint.hasMany(Story, {
     as : 'stories'
 });
-/*Backlog.hasOne(Story, {
-    as : 'backlog'
-});*/
+Story.belongsTo(Sprint);
+Project.hasMany(Story, {
+    as : 'stories'
+});
+Story.belongsTo(Project);
 
 module.exports = {
     database : database,
@@ -106,6 +106,5 @@ module.exports = {
     Collaborator : Collaborator,
     Project : Project,
     Sprint : Sprint,
-    Story: Story,
-    //Backlog: Backlog
+    Story: Story
 };

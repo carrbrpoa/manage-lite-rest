@@ -50,6 +50,7 @@ var collaboratorResource = epilogue.resource({
 
 var projectResource = epilogue.resource({
     model: models.Project,
+    associations: true,
     endpoints: ['/projects', '/projects/:id']
   });
 
