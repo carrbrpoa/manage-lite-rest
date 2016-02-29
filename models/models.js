@@ -62,7 +62,7 @@ var Sprint = database.define('sprints', {
     name : {
         type : Sequelize.STRING,
         allowNull : false,
-        //unique : true
+    // unique : true
     },
     start : {
         type : Sequelize.DATE
@@ -83,6 +83,27 @@ var Story = database.define('stories', {
     }
 });
 
+var Status = database.define('statuses', {
+    name : {
+        type : Sequelize.STRING,
+        allowNull : false,
+        unique : true
+    }
+});
+
+var ProjectStatus = database.define('projectStatus', {
+    boardOrder : {
+        type : Sequelize.INTEGER,
+        allowNull : false,
+        defaultValue : 1
+    },
+    showInBoards : {
+        type : Sequelize.BOOLEAN,
+        allowNull : false,
+        defaultValue : true
+    }
+});
+
 Role.hasOne(Collaborator, {
     as : 'role'
 });
@@ -98,6 +119,13 @@ Project.hasMany(Story, {
     as : 'stories'
 });
 Story.belongsTo(Project);
+Project.belongsToMany(Status, {
+    as : 'statuses',
+    through : ProjectStatus
+});
+Status.belongsToMany(Project, {
+    through : ProjectStatus
+});
 
 module.exports = {
     database : database,
@@ -106,5 +134,7 @@ module.exports = {
     Collaborator : Collaborator,
     Project : Project,
     Sprint : Sprint,
-    Story: Story
+    Story : Story,
+    Status : Status,
+    ProjectStatus : ProjectStatus
 };

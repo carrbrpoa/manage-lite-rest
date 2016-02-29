@@ -97,7 +97,7 @@ router.param('storyId', function(req, res, next, storyId) {
     });
 });
 
-//Problematic
+// Problematic
 router.put('/projects/:projectId', function(req, res, next) {
     if (handleWithEpilogue(req)) {
         console.log('Passing to epilogue');
@@ -148,56 +148,42 @@ router.put('/projects/:projectId', function(req, res, next) {
 });
 
 router.patch('/projects/:projectId/stories/:storyId', function(req, res, next) {
-    if (handleWithEpilogue(req)) {
-        console.log('Passing to epilogue');
-        next();
-    } else {
-        console.log('Not epilogue');
+    var story = req.story;
+    var updateData = {};
 
-        var story = req.story;
-        var updateData = {};
-
-        for (key in req.body) {
-            updateData[key] = req.body[key];
-        }
-
-        models.Story.update(updateData, {
-            where : {
-                id : story.id
-            }
-        }).then(function(response) {
-            return res.json(response);
-        }, function(err) {
-            if (err.message === 'Validation error') {
-                res.status(403);
-                res.send(err);
-            } else {
-                next(err);
-            }
-        });
+    for (key in req.body) {
+        updateData[key] = req.body[key];
     }
+
+    models.Story.update(updateData, {
+        where : {
+            id : story.id
+        }
+    }).then(function(response) {
+        return res.json(response);
+    }, function(err) {
+        if (err.message === 'Validation error') {
+            res.status(403);
+            res.send(err);
+        } else {
+            next(err);
+        }
+    });
 });
 
 router.post('/projects/:projectId/stories', function(req, res, next) {
-    /*if (handleWithEpilogue(req)) {
-        console.log('Passing to epilogue');
-        next();
-    } else {
-        console.log('Not epilogue');*/
+    var story = req.body;
 
-        var story = req.body;
-
-        models.Story.create(story).then(function(response) {
-            return res.json(response);
-        }, function(err) {
-            if (err.message === 'Validation error') {
-                res.status(403);
-                res.send(err);
-            } else {
-                next(err);
-            }
-        });
-    //}
+    models.Story.create(story).then(function(response) {
+        return res.json(response);
+    }, function(err) {
+        if (err.message === 'Validation error') {
+            res.status(403);
+            res.send(err);
+        } else {
+            next(err);
+        }
+    });
 });
 
 module.exports = router;

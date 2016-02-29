@@ -54,6 +54,11 @@ var projectResource = epilogue.resource({
     endpoints: ['/projects', '/projects/:id']
   });
 
+var statusResource = epilogue.resource({
+    model: models.Status,
+    endpoints: ['/statuses', '/statuses/:id']
+  });
+
 /*var sprintResource = epilogue.resource({
     model: Sprint,
     associations: true,
@@ -64,6 +69,7 @@ roleResource.use(conflictResolutionMiddleware);
 settingsResource.use(conflictResolutionMiddleware);
 collaboratorResource.use(conflictResolutionMiddleware);
 projectResource.use(conflictResolutionMiddleware);
+statusResource.use(conflictResolutionMiddleware);
 //sprintResource.use(conflictResolutionMiddleware);
 
 //app.configure(function() {
