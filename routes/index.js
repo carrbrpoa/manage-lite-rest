@@ -50,8 +50,57 @@ router.post('/projects', function(req, res, next) {
                     as : 'sprints'
                 } ]
             }).then(function(project) {
-                t.commit();
-                return res.json(project);
+                if (req.body.statuses) {
+                    Promise.all(req.body.statuses.map(function(status) {
+                        if (status.id) {
+                            return models.ProjectStatus.create({
+                                statusId : status.id,
+                                projectId : project.id,
+                                showInBoards : status.projectStatus.showInBoards,
+                                boardOrder : status.projectStatus.boardOrder
+                            }, {
+                                transaction : t
+                            })
+                        } else {
+                            return models.Status.create(status, {
+                                transaction : t
+                            }).then(function(newStatus) {
+                                return models.ProjectStatus.create({
+                                    statusId : newStatus.id,
+                                    projectId : project.id,
+                                    showInBoards : status.projectStatus.showInBoards || true,
+                                    boardOrder : status.projectStatus.boardOrder || 1
+                                }, {
+                                    transaction : t
+                                })
+                            }, function(err) {
+                                t.rollback();
+                                if (err.message === 'Validation error') {
+                                    res.status(403);
+                                    res.send(err);
+                                } else {
+                                    next(err);
+                                }
+                            })
+                        }
+                    })).then(function(response) {
+                        t.commit().then(function(c) {
+                            var query = projectById(project.id, true, true);
+                            query.then(function(project) {
+                                return res.json(project);
+                            });
+                        });
+                        return;
+                    }, function(err) {
+                        t.rollback();
+                        if (err.message === 'Validation error') {
+                            res.status(403);
+                            res.send(err);
+                        } else {
+                            next(err);
+                        }
+                    });
+                }
             }, function(err) {
                 t.rollback();
                 if (err.message === 'Validation error') {
@@ -65,8 +114,31 @@ router.post('/projects', function(req, res, next) {
     }
 });
 
+var projectById = function(projectId, includeSprint, includeStatus) {
+    var query;
+    var options = {
+        include : []
+    };
+    if (includeSprint) {
+        options.include.push({
+            model : models.Sprint,
+            as : 'sprints'
+        });
+    }
+    if (includeStatus) {
+        options.include.push({
+            model : models.Status,
+            as : 'statuses'
+        });
+    }
+
+    query = models.Project.findById(projectId, options);
+
+    return query;
+}
+
 router.param('projectId', function(req, res, next, projectId) {
-    var query = models.Project.findById(projectId);
+    var query = projectById(projectId);
 
     query.then(function(project) {
         if (!project) {
@@ -107,33 +179,46 @@ router.put('/projects/:projectId', function(req, res, next) {
 
         models.database.transaction().then(function(t) {
             var project = models.Project.build(req.body, {
-                isNewRecord : false,
-                include : [ {
-                    model : models.Sprint,
-                    as : 'sprints'
-                } ]
+                isNewRecord : false
+            /*
+             * , include : [ { model : models.Sprint, as : 'sprints' } ]
+             */
             });
 
             Promise.all([ project.save({
                 transaction : t
-            }), project.sprints.map(function(sprint) {
-                if (sprint.getDataValue('id')) {
-                    return sprint.save({
-                        transaction : t
-                    });
-                } else {
-                    sprint.projectId = project.id;
-                    return models.Sprint.create(sprint, {
-                        transaction : t
+            }), function() {
+                if (req.body.sprints) {
+                    req.body.sprints.map(function(sprint) {
+                        if (sprint.id) {
+                            var sprint = models.Sprint.build(sprint, {
+                                isNewRecord : false
+                            });
+                            return sprint.save({
+                                transaction : t
+                            });
+                        }
                     });
                 }
-
-                /*
-                 * models.Sprint.upsert(sprint, { transaction : t });
-                 */
-            }) ]).then(function(response) {
-                t.commit();
-                return res.json(project);
+            }, function() {
+                if (req.body.sprints) {
+                    req.body.sprints.map(function(sprint) {
+                        if (!sprint.id) {
+                            sprint.projectId = project.id;
+                            return models.Sprint.create(sprint, {
+                                transaction : t
+                            });
+                        }
+                    });
+                }
+            } ]).then(function(response) {
+                t.commit().then(function(c) {
+                    var query = projectById(project.id, true);
+                    query.then(function(project) {
+                        return res.json(project);
+                    });
+                });
+                return;
             }, function(err) {
                 t.rollback();
                 if (err.message === 'Validation error') {
